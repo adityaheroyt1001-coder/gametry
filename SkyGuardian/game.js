@@ -254,6 +254,33 @@
   }, { passive: false });
   stickEl.addEventListener("touchcancel", resetStick);
 
+  function bindActionButton(button, action) {
+    const activate = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (button.setPointerCapture) button.setPointerCapture(e.pointerId);
+      button.classList.add("pressed");
+      if (!held.has(action)) pressedOnce.add(action);
+      held.add(action);
+    };
+    const deactivate = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      button.classList.remove("pressed");
+      held.delete(action);
+    };
+
+    button.addEventListener("pointerdown", activate);
+    button.addEventListener("pointerup", deactivate);
+    button.addEventListener("pointercancel", deactivate);
+    button.addEventListener("lostpointercapture", deactivate);
+    button.addEventListener("click", (e) => e.preventDefault());
+  }
+
+  document.querySelectorAll(".actionBtn").forEach((btn) => {
+    bindActionButton(btn, btn.dataset.action);
+  });
+
   function gamepadVec() {
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const gp of pads) {
