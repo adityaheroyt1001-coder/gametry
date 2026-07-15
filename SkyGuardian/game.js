@@ -424,6 +424,10 @@
     { key: "dmg", name: "Overcharge Rounds", desc: "+1 shot damage", max: 3, baseCost: 80, icon: "💥" },
     { key: "speed", name: "Thruster Tuning", desc: "+Move speed", max: 5, baseCost: 45, icon: "🚀" },
   ];
+  const SHOP_ITEMS = [
+    { key: "phoenixCore", name: "Phoenix Core", desc: "Automatically restores full health when defeated.", cost: 3000, max: 3, icon: "❤️" },
+    { key: "bossDisruptor", name: "Boss Disruptor", desc: "The next boss starts with 35% less health.", cost: 5000, max: 3, icon: "⚡" },
+  ];
   function upgradeCost(def, level) {
     return Math.round(def.baseCost * Math.pow(1.55, level));
   }
@@ -432,10 +436,14 @@
       const raw = localStorage.getItem("skyguardian_meta_v2");
       if (raw) {
         const m = JSON.parse(raw);
-        return { coins: m.coins || 0, upg: Object.assign({ hp: 0, fireRate: 0, dmg: 0, speed: 0 }, m.upg || {}) };
+        return {
+          coins: m.coins || 0,
+          upg: Object.assign({ hp: 0, fireRate: 0, dmg: 0, speed: 0 }, m.upg || {}),
+          items: Object.assign({ phoenixCore: 0, bossDisruptor: 0 }, m.items || {}),
+        };
       }
     } catch (e) {}
-    return { coins: 0, upg: { hp: 0, fireRate: 0, dmg: 0, speed: 0 } };
+    return { coins: 0, upg: { hp: 0, fireRate: 0, dmg: 0, speed: 0 }, items: { phoenixCore: 0, bossDisruptor: 0 } };
   }
   function saveMeta() {
     try { localStorage.setItem("skyguardian_meta_v2", JSON.stringify(meta)); } catch (e) {}
@@ -443,6 +451,26 @@
   let meta = loadMeta();
   let bestRunScore = Number(localStorage.getItem("skyguardian_best_v2") || 0);
   let bestSurvivalScore = Number(localStorage.getItem("skyguardian_survival_best_v1") || 0);
+  function loadPassedLevels() {
+    try {
+      const saved = JSON.parse(localStorage.getItem("skyguardian_levels_passed_v1") || "[]");
+      return new Set(Array.isArray(saved) ? saved.filter((i) => Number.isInteger(i) && i >= 0 && i < LEVELS.length) : []);
+    } catch (e) { return new Set(); }
+  }
+  function savePassedLevels() {
+    try { localStorage.setItem("skyguardian_levels_passed_v1", JSON.stringify([...passedLevels].sort((a, b) => a - b))); } catch (e) {}
+  }
+  function nextCampaignLevel() {
+    for (let i = 0; i < LEVELS.length; i++) if (!passedLevels.has(i)) return i;
+    return 0;
+  }
+  function updateCampaignButton() {
+    const btn = document.getElementById("campaignBtn");
+    if (!btn) return;
+    const next = nextCampaignLevel();
+    btn.textContent = passedLevels.size === LEVELS.length ? "▶ Campaign · Play Again" : `▶ Campaign · Resume Level ${next + 1}`;
+  }
+  let passedLevels = new Set();
 
   // ---------------------------------------------------------------------
   // Level campaign definition
@@ -883,6 +911,13 @@
 
   function spawnBoss() {
     const b = level.boss;
+    const useDisruptor = meta.items.bossDisruptor > 0;
+    if (useDisruptor) {
+      meta.items.bossDisruptor--;
+      saveMeta();
+      showPickupMessage("BOSS DISRUPTED!", "#fff487");
+    }
+    const bossStartHP = Math.ceil(b.maxHP * (useDisruptor ? 0.65 : 1));
     const imageKey = bossImageKeys[bossImageCycle % bossImageKeys.length];
     const boss3Image = images.boss3;
     const chosenImageKey = boss3Image && bossImageCycle % 3 === 0 ? "boss3" : imageKey;
@@ -890,7 +925,7 @@
     boss = {
       name: b.name, color: b.color, patterns: b.patterns, intervalMul: b.intervalMul, canSummon: !!b.canSummon,
       x: W + 220, y: H / 2, homeX: W - 190, r: 78,
-      hp: b.maxHP, maxHp: b.maxHP, spin: 0, hitFlash: 0, telegraph: 0,
+      hp: bossStartHP, maxHp: bossStartHP, spin: 0, hitFlash: 0, telegraph: 0,
       patternIdx: 0, patternTimer: rand(1.6, 2.2) * b.intervalMul, chargeTarget: H / 2,
       entering: true, imageKey: chosenImageKey, image: images[chosenImageKey],
     };
@@ -1301,7 +1336,20 @@
 
     if (shake > 0) shake = Math.max(0, shake - dt * 40);
 
-    if (health <= 0) { onGameOver(); return; }
+    if (health <= 0) {
+      if (meta.items.phoenixCore > 0) {
+        meta.items.phoenixCore--;
+        saveMeta();
+        health = currentMaxHealth();
+        invulnTimer = 3;
+        shake = Math.max(shake, 18);
+        spawnBurst(hero.x, hero.y, "#ffdc5c", 36);
+        showPickupMessage("PHOENIX REVIVE!", "#ffdc5c");
+      } else {
+        onGameOver();
+        return;
+      }
+    }
 
     updateHUD();
   }
@@ -1824,7 +1872,7 @@
 
   function startNewRun() {
     runScore = 0;
-    showLevelIntro(0);
+    showLevelIntro(nextCampaignLevel());
   }
 
   function startSurvival() {
@@ -1894,6 +1942,11 @@
     const earned = level.rewardCoins;
     meta.coins += earned;
     saveMeta();
+    if (gameMode === "levels") {
+      passedLevels.add(levelIndex);
+      savePassedLevels();
+      updateCampaignButton();
+    }
     runScore += Math.floor(score);
     boss = null;
     document.getElementById("bossBar").classList.remove("show");
@@ -1955,6 +2008,37 @@
       }
       list.appendChild(row);
     }
+    const heading = document.createElement("div");
+    heading.className = "shopSectionTitle";
+    heading.textContent = "ONE-USE GEAR";
+    list.appendChild(heading);
+    for (const item of SHOP_ITEMS) {
+      const owned = meta.items[item.key] || 0;
+      const maxed = owned >= item.max;
+      const row = document.createElement("div");
+      row.className = "shopRow shopItemRow";
+      row.innerHTML = `
+        <div class="shopIcon">${item.icon}</div>
+        <div class="shopInfo">
+          <div class="shopName">${item.name} <span class="shopOwned">Owned: ${owned}/${item.max}</span></div>
+          <div class="shopDesc">${item.desc}</div>
+        </div>
+        <button class="btn shopBuyBtn" ${maxed || meta.coins < item.cost ? "disabled" : ""}>
+          ${maxed ? "MAX" : `${item.cost} 🪙`}
+        </button>
+      `;
+      if (!maxed) {
+        row.querySelector(".shopBuyBtn").addEventListener("click", () => {
+          if (meta.coins >= item.cost && (meta.items[item.key] || 0) < item.max) {
+            meta.coins -= item.cost;
+            meta.items[item.key] = (meta.items[item.key] || 0) + 1;
+            saveMeta();
+            renderShop();
+          }
+        });
+      }
+      list.appendChild(row);
+    }
   }
 
   function goToMenu() {
@@ -1964,6 +2048,7 @@
     document.getElementById("chargeMeterWrap").classList.remove("show");
     document.getElementById("milkMeterWrap").classList.remove("show");
     document.getElementById("shieldBadge").classList.remove("show");
+    updateCampaignButton();
     showOverlay("menuScreen");
   }
 
@@ -2075,6 +2160,8 @@
   // Boot
   // ---------------------------------------------------------------------
   resetLevel(0, true);
+  passedLevels = loadPassedLevels();
+  updateCampaignButton();
   loadAssets(() => {
     document.getElementById("selectedCharLabel").textContent = CHARACTERS[selectedCharacter].name;
     requestAnimationFrame(frame);
