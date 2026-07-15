@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 90">
+  <defs>
+    <linearGradient id="heartFace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff8f80"/>
+      <stop offset="100%" stop-color="#e8402a"/>
+    </linearGradient>
+  </defs>
+  <path d="M50 84 C10 58 0 34 18 18 C32 6 46 14 50 26 C54 14 68 6 82 18 C100 34 90 58 50 84Z" fill="url(#heartFace)" stroke="#8c1a10" stroke-width="4" stroke-linejoin="round"/>
+  <ellipse cx="34" cy="28" rx="9" ry="6" fill="#ffffff" opacity="0.55"/>
+</svg>

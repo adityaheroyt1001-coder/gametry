@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sky Guardian</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="rotateOverlay">
+  <div class="rotateContent">
+    <div class="rotateIcon">📱</div>
+    <p>Rotate your device to landscape<br>for the best experience</p>
+  </div>
+</div>
+<div id="game-wrap">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div id="healthBar"></div>
+    <div id="hudRight">
+      <div id="bossBar" class="bossBar">
+        <div class="bossMeta">
+          <span class="bossLabel">BOSS</span>
+          <span id="bossName">—</span>
+        </div>
+        <div class="bossTrack"><div id="bossFill"></div></div>
+      </div>
+      <div id="scorePanel">
+        <span class="label">SCORE</span>
+        <span id="scoreValue">0</span>
+        <span class="subStat">Coins <b id="coinValue">0</b></span>
+        <span class="subStat" id="levelIndicator">LV 1 · Intro</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="boostBadge">⚡ SPEED BOOST!</div>
+  <div id="fireBadge">🔥 FIRE READY! (F)</div>
+  <div id="shieldBadge">🛡 SHIELD READY (E)</div>
+  <div id="chargeMeterWrap"><div id="chargeMeterFill"></div></div>
+
+  <div id="topRightControls">
+    <button id="pauseBtn" class="iconBtn" title="Pause (P)">❚❚</button>
+  </div>
+
+  <!-- Virtual joystick for touch -->
+  <div id="touchStick"><div class="knob"></div></div>
+
+  <!-- Main Menu -->
+  <div id="menuScreen" class="overlay">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title">SKY GUARDIAN</h1>
+      <p class="subtitle">Fly forever. Collect. Survive.</p>
+      <button id="campaignBtn" class="btn">▶ Campaign · 20 Levels</button>
+      <button id="survivalBtn" class="btn secondary">♾ Survival Mode</button>
+      <div class="menuRow">
+        <button id="settingsBtn" class="btn small">⚙ Settings</button>
+        <button id="creditsBtn" class="btn small">ℹ Credits</button>
+      </div>
+      <p class="howto">Move with Arrow Keys / WASD, or drag the on-screen stick on mobile.<br>
+      Collect coins for points, grab energy crystals for a speed boost. Tap F to fire a laser, hold F to charge a Sonic Boom blast. Press E for a 5s shockwave shield (12s cooldown). Press P to pause.</p>
+    </div>
+  </div>
+
+  <!-- Level Intro -->
+  <div id="levelIntroScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 id="levelIntroName" class="game-title">Level 1 · Sky Run</h1>
+      <p id="levelIntroSubtitle" class="subtitle">Stay ahead of the storm.</p>
+      <p id="levelIntroObjective" class="statLine">Objective: Survive and reach the boss.</p>
+      <button id="levelIntroBtn" class="btn">▶ Begin Flight</button>
+    </div>
+  </div>
+
+  <!-- Pause -->
+  <div id="pauseScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title" style="font-size:clamp(28px,6vw,46px)">PAUSED</h1>
+      <button id="resumeBtn" class="btn">▶ Resume</button>
+      <button id="menuFromPauseBtn" class="btn secondary">☰ Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div id="gameOverScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title" style="color:#ff6a52">MISSION LOST</h1>
+      <p class="statLine">Final Score: <b id="finalScore">0</b></p>
+      <p class="statLine">Time Survived: <b id="finalTime">0s</b></p>
+      <p class="statLine">Final Level: <b id="finalLevelName">—</b></p>
+      <p class="statLine">Best Score: <b id="bestScore">0</b></p>
+      <button id="retryBtn" class="btn">↻ Try Again</button>
+      <button id="menuFromGameOverBtn" class="btn secondary">☰ Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Victory -->
+  <div id="victoryScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title">SKY SAVED!</h1>
+      <p class="subtitle">Sky Guardian cleared the skies!</p>
+      <p class="statLine">Final Score: <b id="victoryScore">0</b></p>
+      <p class="statLine">Coins Collected: <b id="victoryCoins">0</b></p>
+      <button id="victoryRetryBtn" class="btn">↻ Fly Again</button>
+      <button id="menuFromVictoryBtn" class="btn secondary">☰ Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Level Complete -->
+  <div id="levelCompleteScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title">LEVEL CLEAR!</h1>
+      <p id="levelCompleteName" class="subtitle">Level complete</p>
+      <p class="statLine">Score: <b id="levelCompleteScore">0</b></p>
+      <p class="statLine">Reward: <b id="levelCompleteCoins">0</b> coins</p>
+      <button id="levelCompleteBtn" class="btn">🛠 Open Shop</button>
+    </div>
+  </div>
+
+  <!-- Shop -->
+  <div id="shopScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content shopContent">
+      <h1 class="game-title">UPGRADE BAY</h1>
+      <p class="subtitle">Spend coins to strengthen your ship.</p>
+      <p class="shopSummary">Coins: <b id="shopCoins">0</b></p>
+      <div id="shopList"></div>
+      <button id="shopContinueBtn" class="btn">▶ Continue</button>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div id="settingsScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title" style="font-size:clamp(28px,6vw,46px)">SETTINGS</h1>
+      <div class="settingsRow">
+        <label for="musicVolRange">Music Volume</label>
+        <input type="range" id="musicVolRange" min="0" max="1" step="0.05">
+      </div>
+      <div class="settingsRow">
+        <label for="sfxVolRange">SFX Volume</label>
+        <input type="range" id="sfxVolRange" min="0" max="1" step="0.05">
+      </div>
+      <button id="fullscreenBtn" class="btn secondary">⛶ Fullscreen + Landscape</button>
+      <button id="settingsBackBtn" class="btn">◀ Back</button>
+    </div>
+  </div>
+
+  <!-- Credits -->
+  <div id="creditsScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title" style="font-size:clamp(28px,6vw,46px)">CREDITS</h1>
+      <p class="statLine">Game design &amp; development: <b>Alok Singh</b></p>
+      <p class="statLine">Built with assistance from <b>Claude (Anthropic)</b></p>
+      <p class="howto">All audio used in this game is not owned by the developer. Rights to all music and sound effects belong to their respective original owners, used here for non-commercial/demo purposes only.</p>
+      <button id="creditsBackBtn" class="btn">◀ Back</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

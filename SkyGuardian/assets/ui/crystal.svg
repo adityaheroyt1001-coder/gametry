@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+  <defs>
+    <radialGradient id="crystGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#bdfcff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#bdfcff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="crystFace" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8ff7ff"/>
+      <stop offset="100%" stop-color="#22c9e0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="60" r="52" fill="url(#crystGlow)"/>
+  <polygon points="50,10 75,45 63,105 37,105 25,45" fill="url(#crystFace)" stroke="#0e8b9c" stroke-width="4" stroke-linejoin="round"/>
+  <polygon points="50,10 60,45 50,105 40,45" fill="#d7fdff" opacity="0.55"/>
+  <polygon points="45,25 50,10 55,25 50,35" fill="#ffffff" opacity="0.85"/>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160">
+  <defs>
+    <radialGradient id="boomFace" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#fff2b0"/>
+      <stop offset="45%" stop-color="#ffb23d"/>
+      <stop offset="100%" stop-color="#e8402a"/>
+    </radialGradient>
+  </defs>
+  <g fill="url(#boomFace)" stroke="#a52210" stroke-width="4" stroke-linejoin="round">
+    <polygon points="80,10 95,55 140,40 105,75 150,90 105,100 120,145 80,115 40,145 55,100 10,90 55,75 20,40 65,55"/>
+  </g>
+  <circle cx="80" cy="80" r="22" fill="#fff8d8"/>
+</svg>

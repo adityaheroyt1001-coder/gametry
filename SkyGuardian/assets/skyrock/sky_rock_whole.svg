@@ -1,0 +1,98 @@
+<!-- Copy from here for the SVG -->
+<svg class="game-asset" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <!-- Main rock body - light from upper right, same convention as the hero asset -->
+    <linearGradient id="rockGrad" x1="85%" y1="5%" x2="15%" y2="100%">
+      <stop offset="0%" stop-color="#9a8f86"/>
+      <stop offset="35%" stop-color="#6e6259"/>
+      <stop offset="70%" stop-color="#463d37"/>
+      <stop offset="100%" stop-color="#241f1c"/>
+    </linearGradient>
+    <linearGradient id="rockGradFace" x1="80%" y1="0%" x2="20%" y2="100%">
+      <stop offset="0%" stop-color="#b3a89d"/>
+      <stop offset="50%" stop-color="#7d7166"/>
+      <stop offset="100%" stop-color="#463d37"/>
+    </linearGradient>
+    <!-- moss / mineral accent -->
+    <linearGradient id="mossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8fae56"/>
+      <stop offset="100%" stop-color="#4d6a2e"/>
+    </linearGradient>
+    <!-- crystal vein glow -->
+    <linearGradient id="veinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe27a"/>
+      <stop offset="100%" stop-color="#d99a1f"/>
+    </linearGradient>
+
+    <!-- small orbiting debris chips -->
+    <linearGradient id="chipGrad" x1="80%" y1="0%" x2="20%" y2="100%">
+      <stop offset="0%" stop-color="#a89c90"/>
+      <stop offset="100%" stop-color="#332b27"/>
+    </linearGradient>
+
+    <filter id="rockShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="4" dy="12" stdDeviation="8" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- ===================== small orbiting debris (sells "floating in the sky") ===================== -->
+  <g filter="url(#rockShadow)">
+    <path d="M 640,150 L 662,142 L 672,160 L 655,172 L 636,164 Z" fill="url(#chipGrad)"/>
+    <path d="M 190,120 L 208,110 L 218,126 L 202,136 Z" fill="url(#chipGrad)"/>
+    <path d="M 600,340 L 618,332 L 626,348 L 610,356 Z" fill="url(#chipGrad)"/>
+  </g>
+
+  <!-- ===================== MAIN ROCK ===================== -->
+  <g filter="url(#rockShadow)">
+    <!-- overall silhouette: irregular jagged boulder -->
+    <path d="M 430,120
+             L 520,145
+             L 560,190
+             L 590,250
+             L 575,310
+             L 540,365
+             L 470,395
+             L 400,390
+             L 330,370
+             L 275,330
+             L 250,270
+             L 260,205
+             L 305,155
+             L 365,125
+             Z"
+          fill="url(#rockGrad)" stroke="#1a1512" stroke-width="3" stroke-linejoin="round"/>
+
+    <!-- lit facet (upper right face catching the light) -->
+    <path d="M 430,120 L 520,145 L 560,190 L 545,225 L 470,215 L 400,180 L 365,125 Z"
+          fill="url(#rockGradFace)" opacity="0.9"/>
+
+    <!-- secondary facet for extra faceted / low-poly depth -->
+    <path d="M 545,225 L 590,250 L 575,310 L 540,290 L 500,255 Z" fill="#5c5148" opacity="0.85"/>
+    <path d="M 275,330 L 330,370 L 400,390 L 380,355 L 320,340 Z" fill="#2e2723" opacity="0.75"/>
+    <path d="M 260,205 L 250,270 L 300,290 L 320,240 L 305,200 Z" fill="#5c5148" opacity="0.6"/>
+
+    <!-- pre-existing crack network (foreshadows how it will shatter) -->
+    <path d="M 470,215 C 450,240 435,270 445,300 C 452,320 440,345 415,360"
+          fill="none" stroke="#0e0b09" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 445,300 C 470,305 495,300 515,285" fill="none" stroke="#0e0b09" stroke-opacity="0.7" stroke-width="3" stroke-linecap="round"/>
+    <path d="M 400,180 C 385,205 378,235 390,260" fill="none" stroke="#0e0b09" stroke-opacity="0.6" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M 445,300 C 430,315 405,320 380,315" fill="none" stroke="#0e0b09" stroke-opacity="0.55" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- thin hairline cracks -->
+    <path d="M 500,255 C 490,270 480,282 468,290" fill="none" stroke="#0e0b09" stroke-opacity="0.4" stroke-width="1.5"/>
+    <path d="M 340,260 C 355,275 365,290 372,305" fill="none" stroke="#0e0b09" stroke-opacity="0.4" stroke-width="1.5"/>
+
+    <!-- glowing mineral vein running through the cracks -->
+    <path d="M 470,215 C 450,240 435,270 445,300" fill="none" stroke="url(#veinGrad)" stroke-opacity="0.55" stroke-width="1.4"/>
+
+    <!-- moss patches for surface detail -->
+    <path d="M 300,300 C 290,310 288,322 298,330 C 310,336 324,332 328,320 C 330,308 316,298 300,300 Z" fill="url(#mossGrad)" opacity="0.85"/>
+    <path d="M 480,340 C 472,348 472,358 482,362 C 494,366 504,358 502,347 C 500,338 490,336 480,340 Z" fill="url(#mossGrad)" opacity="0.7"/>
+
+    <!-- specular highlight -->
+    <ellipse cx="470" cy="165" rx="34" ry="14" fill="#ffffff" opacity="0.28" transform="rotate(-18 470 165)"/>
+    <ellipse cx="290" cy="235" rx="14" ry="7" fill="#ffffff" opacity="0.16" transform="rotate(-30 290 235)"/>
+
+    <!-- rim light along the top-left edge -->
+    <path d="M 365,125 C 320,140 285,170 262,205" stroke="#dfe6ee" stroke-opacity="0.3" stroke-width="3" fill="none"/>
+  </g>
+</svg>

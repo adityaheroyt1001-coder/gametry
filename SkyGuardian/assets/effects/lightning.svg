@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140">
+  <defs>
+    <radialGradient id="boltGlow" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#fff6b0" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#fff6b0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="boltFace" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff487"/>
+      <stop offset="100%" stop-color="#ffcc2e"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="70" r="60" fill="url(#boltGlow)"/>
+  <polygon points="60,5 25,75 48,75 40,135 80,55 55,55" fill="url(#boltFace)" stroke="#c98700" stroke-width="4" stroke-linejoin="round"/>
+</svg>

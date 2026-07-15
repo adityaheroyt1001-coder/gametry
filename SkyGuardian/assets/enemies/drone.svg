@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160">
+  <defs>
+    <linearGradient id="dbody" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#6b7686"/>
+      <stop offset="100%" stop-color="#3d4652"/>
+    </linearGradient>
+    <radialGradient id="eyeGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#ff6b5c"/>
+      <stop offset="100%" stop-color="#c81e10"/>
+    </radialGradient>
+  </defs>
+  <!-- side arms/rotors -->
+  <line x1="40" y1="60" x2="10" y2="40" stroke="#2b323b" stroke-width="6" stroke-linecap="round"/>
+  <line x1="160" y1="60" x2="190" y2="40" stroke="#2b323b" stroke-width="6" stroke-linecap="round"/>
+  <ellipse cx="8" cy="36" rx="22" ry="6" fill="#93a1b0" opacity="0.85"/>
+  <ellipse cx="192" cy="36" rx="22" ry="6" fill="#93a1b0" opacity="0.85"/>
+  <circle cx="8" cy="36" r="6" fill="#2b323b"/>
+  <circle cx="192" cy="36" r="6" fill="#2b323b"/>
+  <!-- main hull -->
+  <ellipse cx="100" cy="80" rx="60" ry="42" fill="url(#dbody)" stroke="#20262d" stroke-width="5"/>
+  <!-- visor -->
+  <path d="M55 78 Q100 55 145 78 Q140 100 100 100 Q60 100 55 78Z" fill="#141821" stroke="#20262d" stroke-width="3"/>
+  <circle cx="100" cy="80" r="16" fill="url(#eyeGlow)"/>
+  <circle cx="100" cy="80" r="7" fill="#ffe3d6"/>
+  <!-- panel lines -->
+  <path d="M70 55 L70 100 M130 55 L130 100" stroke="#20262d" stroke-width="3" opacity="0.6"/>
+  <!-- bottom fin -->
+  <path d="M85 118 L100 140 L115 118 Z" fill="#3d4652" stroke="#20262d" stroke-width="4"/>
+  <!-- rivets -->
+  <circle cx="60" cy="90" r="3" fill="#141821"/>
+  <circle cx="140" cy="90" r="3" fill="#141821"/>
+</svg>
