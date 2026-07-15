@@ -15,11 +15,18 @@
   const ASSET_LIST = {
     heroIdle: "assets/hero/idle.png",
     heroFly: "assets/hero/fly.png",
+    heroSupermanIdle: "assets/hero/superman.png",
+    heroSupermanFly: "assets/hero/superman.png",
+    heroBatmanIdle: "assets/hero/batman.png",
+    heroBatmanFly: "assets/hero/batman.png",
+    heroHomelanderIdle: "assets/hero/homelander.png",
+    heroHomelanderFly: "assets/hero/homelander.png",
+    firecracker: "assets/hero/firecracker.png",
     drone: "assets/enemies/krypto.png",
     boss1: "assets/enemies/boss.png",
     boss2: "assets/enemies/boss 2.png",
     boss3: "assets/enemies/boss 3.png",
-    canon: "assets/enemies/canon.png",
+    canon: "assets/enemies/drone.svg",
     sky: "assets/backgrounds/sky_bg.svg",
     background2: "assets/backgrounds/background 2.png",
     background3: "assets/backgrounds/background 3.png",
@@ -45,6 +52,8 @@
     sonicBoom: "assets/sounds/sonic boom.wav",
     bossHurt: "assets/sounds/boss hurt.wav",
     bgm: "assets/sounds/bgm.mp3",
+    homelander: "assets/sounds/homelander.mp3",
+    milk: "assets/sounds/milk.wav",
   };
 
   const images = {};
@@ -56,6 +65,69 @@
   const assetKeys = Object.keys(ASSET_LIST);
   const soundKeys = Object.keys(SOUND_LIST);
   const totalAssets = assetKeys.length + soundKeys.length;
+
+  const CHARACTERS = {
+    superman: { name: "Superman", fireStyle: "beam", fireColor: "#ff3b30", fireColorCore: "#ffdada", trailColor: "#ff6a52" },
+    batman: { name: "Batman", fireStyle: "batarang", fireColor: "#1c1c22", fireColorCore: "#9aa0ad", trailColor: "#3a3a44" },
+    homelander: { name: "Homelander", fireStyle: "blood", fireColor: "#8a0012", fireColorCore: "#ff2d2d", trailColor: "#4d0009", themeSound: "homelander", spriteScale: 2 },
+  };
+  function loadSelectedCharacter() {
+    const c = localStorage.getItem("skyguardian_character");
+    return CHARACTERS[c] ? c : "superman";
+  }
+  let selectedCharacter = loadSelectedCharacter();
+  function saveSelectedCharacter() { try { localStorage.setItem("skyguardian_character", selectedCharacter); } catch (e) {} }
+  function playHomelanderTheme(durationSec) {
+    const s = sounds.homelander;
+    if (!s) return;
+    try {
+      s.currentTime = 0; s.volume = musicVolume; s.play().catch(() => {});
+      clearTimeout(playHomelanderTheme._t);
+      playHomelanderTheme._t = setTimeout(() => { try { s.pause(); } catch (e) {} }, durationSec * 1000);
+    } catch (e) {}
+  }
+  playHomelanderTheme._t = 0;
+  let homelanderMusicTimer = 30;
+  let homelanderMusicBreakRemaining = 0;
+  let bgmPausedForHomelander = false;
+  function resetHomelanderMusicSchedule() {
+    const shouldResumeBgm = bgmPausedForHomelander;
+    homelanderMusicTimer = 30;
+    homelanderMusicBreakRemaining = 0;
+    bgmPausedForHomelander = false;
+    clearTimeout(playHomelanderTheme._t);
+    try { if (sounds.homelander) sounds.homelander.pause(); } catch (e) {}
+    if (shouldResumeBgm) playBgm();
+  }
+  function startHomelanderMusicBreak() {
+    const theme = sounds.homelander;
+    if (!theme) return;
+    clearTimeout(playHomelanderTheme._t);
+    const bgm = sounds.bgm;
+    bgmPausedForHomelander = !!bgm && !bgm.paused;
+    try { if (bgmPausedForHomelander) bgm.pause(); } catch (e) {}
+    try {
+      theme.currentTime = 0;
+      theme.volume = musicVolume;
+      theme.play().catch(() => {});
+    } catch (e) {}
+    homelanderMusicBreakRemaining = 20;
+  }
+  function updateHomelanderMusic(dt) {
+    if (selectedCharacter !== "homelander") return;
+    if (homelanderMusicBreakRemaining > 0) {
+      homelanderMusicBreakRemaining -= dt;
+      if (homelanderMusicBreakRemaining <= 0) {
+        try { if (sounds.homelander) sounds.homelander.pause(); } catch (e) {}
+        if (bgmPausedForHomelander) playBgm();
+        bgmPausedForHomelander = false;
+        homelanderMusicTimer = 30;
+      }
+      return;
+    }
+    homelanderMusicTimer -= dt;
+    if (homelanderMusicTimer <= 0) startHomelanderMusicBreak();
+  }
 
   function playSound(key) {
     if (sounds[key]) {
@@ -495,9 +567,9 @@
   let levelPhase = "running"; // 'running' | 'boss'
   let level = LEVELS[0];
 
-  let hero, enemies, enemyShots, coins, crystals, islands, birds, skyrocks, particles, shots, boss, motes, collectibles;
+  let hero, enemies, enemyShots, coins, crystals, islands, birds, skyrocks, particles, shots, boss, motes, collectibles, milkBursts;
   let scrollSpeed, elapsed, score, health, nextSpeedupAt, boostTimer, invulnTimer, magnetTimer, shieldTimer;
-  let fireCharging, fireCharge, sonicCooldown, shieldAbilityCooldown, sonicShots;
+  let fireCharging, fireCharge, sonicCooldown, shieldAbilityCooldown, sonicShots, milkMeter;
   let spawnTimers;
   let shake = 0;
   let runScore = 0;
@@ -518,7 +590,7 @@
     hero = freshHero();
     enemies = []; enemyShots = []; coins = []; crystals = [];
     islands = []; birds = []; skyrocks = []; particles = []; shots = [];
-    motes = []; collectibles = [];
+    motes = []; collectibles = []; milkBursts = [];
     boss = null;
     scrollSpeed = level.scrollSpeedBase;
     elapsed = 0;
@@ -535,10 +607,12 @@
     sonicCooldown = 0;
     shieldAbilityCooldown = 0;
     sonicShots = [];
+    milkMeter = 0;
+    resetHomelanderMusicSchedule();
     activeBackgroundKey = backgroundKeys[(Math.random() * backgroundKeys.length) | 0];
     shake = 0;
     cam = { zoom: 1, zoomV: 1, rot: 0, leadX: 0, leadY: 0 };
-    spawnTimers = { enemy: 1.0, coin: 0.35, crystal: 5, island: 0, bird: 1.5, skyrock: 7.5 };
+    spawnTimers = { enemy: 1.0, coin: 0.35, crystal: 5, island: 0, bird: 1.5, skyrock: 7.5, milk: 8 };
     for (let i = 0; i < 5; i++) {
       islands.push({ x: W * 0.5 + i * 420, y: rand(H * 0.55, H * 0.92), scale: rand(0.7, 1.2), bobPhase: rand(0, 6) });
     }
@@ -555,6 +629,8 @@
     updateHUD();
     const cw = document.getElementById("chargeMeterWrap");
     if (cw) cw.classList.remove("show");
+    const mw = document.getElementById("milkMeterWrap");
+    if (mw) mw.classList.remove("show");
   }
 
   function resetSurvival() {
@@ -565,18 +641,19 @@
     hero = freshHero();
     enemies = []; enemyShots = []; coins = []; crystals = [];
     islands = []; birds = []; skyrocks = []; particles = []; shots = [];
-    motes = []; collectibles = []; sonicShots = [];
+    motes = []; collectibles = []; sonicShots = []; milkBursts = [];
     boss = null;
     scrollSpeed = level.scrollSpeedBase;
     elapsed = 0; score = 0; runScore = 0;
     health = currentMaxHealth();
     nextSpeedupAt = SPEEDUP_INTERVAL;
     boostTimer = 0; invulnTimer = 0; magnetTimer = 0; shieldTimer = 0;
-    fireCharging = false; fireCharge = 0; sonicCooldown = 0; shieldAbilityCooldown = 0;
+    fireCharging = false; fireCharge = 0; sonicCooldown = 0; shieldAbilityCooldown = 0; milkMeter = 0;
+    resetHomelanderMusicSchedule();
     activeBackgroundKey = backgroundKeys[(Math.random() * backgroundKeys.length) | 0];
     shake = 0;
     cam = { zoom: 1, zoomV: 1, rot: 0, leadX: 0, leadY: 0 };
-    spawnTimers = { enemy: 1.0, coin: 0.35, crystal: 5, island: 0, bird: 1.5, skyrock: 7.5 };
+    spawnTimers = { enemy: 1.0, coin: 0.35, crystal: 5, island: 0, bird: 1.5, skyrock: 7.5, milk: 8 };
     for (let i = 0; i < 5; i++) islands.push({ x: W * 0.5 + i * 420, y: rand(H * 0.55, H * 0.92), scale: rand(0.7, 1.2), bobPhase: rand(0, 6) });
     for (let i = 0; i < 2; i++) birds.push({ x: W * 0.6 + i * 380, y: rand(40, H * 0.55), flap: rand(0, Math.PI * 2) });
     for (let i = 0; i < 2; i++) skyrocks.push({ x: W + 120 + i * 460, y: rand(90, H - 120), r: 84, broken: false, loot: pickRockLoot() });
@@ -585,6 +662,8 @@
     updateHUD();
     const cw2 = document.getElementById("chargeMeterWrap");
     if (cw2) cw2.classList.remove("show");
+    const mw = document.getElementById("milkMeterWrap");
+    if (mw) mw.classList.remove("show");
   }
 
   // ---------------------------------------------------------------------
@@ -634,6 +713,60 @@
 
   function spawnCollectible(x, y, type) {
     collectibles.push({ x, y, r: 16, type, spin: rand(0, Math.PI * 2) });
+  }
+  function spawnMilk() {
+    collectibles.push({ x: W + 40, y: rand(80, H - 80), r: 18, type: "milk", spin: rand(0, Math.PI * 2) });
+  }
+  function collectMilk() {
+    milkMeter = Math.min(1, milkMeter + 0.34);
+    spawnBurst(hero.x, hero.y, "#ffffff", 16);
+    showPickupMessage("MILK!", "#ffffff");
+    playHomelanderTheme(7);
+    const wrap = document.getElementById("milkMeterWrap");
+    if (wrap) wrap.classList.add("show");
+    if (milkMeter >= 1) {
+      milkMeter = 0;
+      triggerMilkBlast();
+      if (wrap) wrap.classList.remove("show");
+    }
+  }
+  function sonicBoomDamage() {
+    return currentShotDamage() * 4 + 4;
+  }
+  function triggerMilkBlast() {
+    const x = hero.x + hero.r * 5.2;
+    const y = hero.y - hero.r * 2.6;
+    const hasBoss = boss && !boss.dying;
+    milkBursts.push({
+      x, y,
+      targetX: hasBoss ? boss.x : W + 160,
+      targetY: hasBoss ? boss.y : H * 0.5,
+      targetsBoss: hasBoss,
+      life: 3, impactAt: 2.5, age: 0, damageApplied: false,
+    });
+    spawnBurst(hero.x, hero.y, "#ffffff", 16);
+    showPickupMessage("MILK BLAST CHARGING!", "#ffffff");
+  }
+  function applyMilkBlastDamage() {
+    const damage = sonicBoomDamage();
+    shake = Math.max(shake, 18);
+    playSound("milk");
+    showPickupMessage("MILK BLAST!", "#ffffff");
+    if (boss && !boss.dying) {
+      boss.hp -= damage;
+      boss.hitFlash = 1;
+      spawnBurst(boss.x, boss.y, "#ffffff", 18);
+      playSound("bossHurt");
+      if (boss.hp <= 0) startBossDeath();
+      return;
+    }
+    for (const enemy of enemies) {
+      if (enemy.hp <= 0) continue;
+      score += ENEMY_TYPES[enemy.type].score;
+      spawnExplosion(enemy.x, enemy.y);
+      enemy.hp = 0;
+      enemy.x = -9999;
+    }
   }
 
   function crackRock(rock) {
@@ -692,8 +825,9 @@
 
   function fireLaser() {
     hero.fireTimer = currentFireCooldown();
-    shots.push({ x: hero.x + hero.r * 0.9, y: hero.y, vx: FIRE_SPEED, vy: 0, life: FIRE_LIFE });
-    spawnBurst(hero.x + hero.r * 0.5, hero.y, "#ff8c2e", 6);
+    const cfg = CHARACTERS[selectedCharacter];
+    shots.push({ x: hero.x + hero.r * 0.9, y: hero.y, vx: FIRE_SPEED, vy: 0, life: FIRE_LIFE, age: 0, style: cfg.fireStyle, color: cfg.fireColor, core: cfg.fireColorCore });
+    spawnBurst(hero.x + hero.r * 0.5, hero.y, cfg.trailColor, 6);
     playSound("fire");
   }
 
@@ -884,6 +1018,7 @@
 
   function update(dt) {
     elapsed += dt;
+    updateHomelanderMusic(dt);
     const iv = inputVector();
     updateCamera(dt, iv);
 
@@ -988,10 +1123,14 @@
     if (spawnTimers.bird <= 0) { spawnBird(); spawnTimers.bird = rand(2, 4.5); }
     spawnTimers.skyrock -= dt;
     if (spawnTimers.skyrock <= 0) { spawnSkyrock(); spawnTimers.skyrock = rand(6.5, 10.5); }
+    if (selectedCharacter === "homelander") {
+      spawnTimers.milk -= dt;
+      if (spawnTimers.milk <= 0) { spawnMilk(); spawnTimers.milk = rand(10, 16); }
+    }
 
     // --- player shots ---
     shots = shots.filter((s) => {
-      s.x += s.vx * dt; s.life -= dt;
+      s.x += s.vx * dt; s.life -= dt; s.age = (s.age || 0) + dt;
       return s.life > 0 && s.x < W + 60;
     });
     const shotDamage = currentShotDamage();
@@ -1024,7 +1163,7 @@
     });
 
     // --- sonic boom shots (piercing shockwave) ---
-    const sonicDamage = currentShotDamage() * 4 + 4;
+    const sonicDamage = sonicBoomDamage();
     sonicShots = sonicShots.filter((s) => {
       s.x += s.vx * dt; s.age += dt; s.life -= dt;
       if (s.life <= 0 || s.x > W + 120) return false;
@@ -1106,8 +1245,10 @@
           shieldTimer = 5;
           spawnBurst(c.x, c.y, "#7fe7ff", 12);
           showPickupMessage("SHIELD!", "#7fe7ff");
+        } else if (c.type === "milk") {
+          collectMilk();
         }
-        playSound("powerup");
+        if (c.type !== "milk") playSound("powerup");
         return false;
       }
       return true;
@@ -1141,6 +1282,14 @@
       p.x += p.vx * dt; p.y += p.vy * dt;
       p.vx *= 0.94; p.vy *= 0.94;
       return p.age < p.life;
+    });
+    milkBursts = milkBursts.filter((burst) => {
+      burst.age += dt;
+      if (!burst.damageApplied && burst.age >= burst.impactAt) {
+        burst.damageApplied = true;
+        applyMilkBlastDamage();
+      }
+      return burst.age < burst.life;
     });
 
     if (shake > 0) shake = Math.max(0, shake - dt * 40);
@@ -1392,6 +1541,15 @@
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(-8, -2, 16, 4);
         ctx.fillRect(-2, -8, 4, 16);
+      } else if (c.type === "milk") {
+        ctx.shadowColor = "#ffffff"; ctx.shadowBlur = 16;
+        ctx.strokeStyle = "rgba(255,255,255,0.8)";
+        ctx.lineWidth = 2;
+        roundRectPath(ctx, -10, -14, 20, 26, 4);
+        ctx.stroke();
+        ctx.fillStyle = "#fdfdfd";
+        roundRectPath(ctx, -9, -4, 18, 15, 3);
+        ctx.fill();
       } else {
         ctx.shadowColor = "#7fe7ff"; ctx.shadowBlur = 16;
         ctx.fillStyle = "#4fdcff";
@@ -1453,21 +1611,37 @@
     for (const s of shots) {
       ctx.save();
       ctx.globalAlpha = clamp(s.life / FIRE_LIFE, 0.35, 1);
-      ctx.shadowColor = "#ff8c2e"; ctx.shadowBlur = 18;
-      const beamLen = 46;
-      const grad = ctx.createLinearGradient(s.x - beamLen, s.y, s.x + 8, s.y);
-      grad.addColorStop(0, "rgba(255,140,46,0)");
-      grad.addColorStop(0.6, "#ff8c2e");
-      grad.addColorStop(1, "#fff2c2");
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 6;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(s.x - beamLen, s.y);
-      ctx.lineTo(s.x + 8, s.y);
-      ctx.stroke();
-      ctx.fillStyle = "#fff2c2";
-      ctx.beginPath(); ctx.arc(s.x + 6, s.y, 5, 0, Math.PI * 2); ctx.fill();
+      if (s.style === "batarang") {
+        ctx.translate(s.x, s.y);
+        ctx.rotate((s.age || 0) * 14);
+        ctx.shadowColor = s.color; ctx.shadowBlur = 10;
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.moveTo(0, -10); ctx.lineTo(12, 0); ctx.lineTo(0, 10);
+        ctx.lineTo(-4, 3); ctx.lineTo(-12, 8); ctx.lineTo(-6, 0);
+        ctx.lineTo(-12, -8); ctx.lineTo(-4, -3);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = s.core;
+        ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
+      } else {
+        const beamLen = s.style === "blood" ? 56 : 46;
+        ctx.shadowColor = s.color; ctx.shadowBlur = s.style === "blood" ? 22 : 18;
+        const grad = ctx.createLinearGradient(s.x - beamLen, s.y, s.x + 8, s.y);
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(0.6, s.color);
+        grad.addColorStop(1, s.core);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = s.style === "blood" ? 8 : 6;
+        ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(s.x - beamLen, s.y); ctx.lineTo(s.x + 8, s.y); ctx.stroke();
+        ctx.fillStyle = s.core;
+        ctx.beginPath(); ctx.arc(s.x + 6, s.y, 5, 0, Math.PI * 2); ctx.fill();
+        if (s.style === "blood") {
+          ctx.globalAlpha *= 0.7;
+          ctx.fillStyle = s.color;
+          ctx.beginPath(); ctx.arc(s.x - 18, s.y + Math.sin(s.x * 0.2) * 6, 3, 0, Math.PI * 2); ctx.fill();
+        }
+      }
       ctx.restore();
     }
 
@@ -1494,7 +1668,9 @@
 
     if (hero) {
       const flashHit = invulnTimer > 0 && Math.floor(invulnTimer * 12) % 2 === 0;
-      const heroImg = state === STATE.MENU ? images.heroIdle : images.heroFly;
+      const charKey = selectedCharacter.charAt(0).toUpperCase() + selectedCharacter.slice(1);
+      const wantKey = "hero" + charKey + (state === STATE.MENU ? "Idle" : "Fly");
+      const heroImg = imgOk(images[wantKey]) ? images[wantKey] : (state === STATE.MENU ? images.heroIdle : images.heroFly);
       const bobY = Math.sin(hero.bob) * 4;
       if (shieldTimer > 0) {
         const pulse = 0.85 + Math.sin(elapsed * 10) * 0.08;
@@ -1525,7 +1701,50 @@
         drawImgCentered(images.lightning, hero.x - 55, hero.y + bobY, 60, 84, 0, 0.85);
         ctx.restore();
       }
-      drawImgCentered(heroImg, hero.x, hero.y + bobY, hero.r * 3.4, hero.r * 2.7, hero.tilt, flashHit ? 0.35 : 1);
+      const spriteScale = CHARACTERS[selectedCharacter].spriteScale || 1;
+      drawImgCentered(heroImg, hero.x, hero.y + bobY, hero.r * 3.4 * spriteScale, hero.r * 2.7 * spriteScale, hero.tilt, flashHit ? 0.35 : 1);
+    }
+
+    for (const burst of milkBursts) {
+      const t = burst.age / burst.life;
+      const size = 150;
+      const splashT = clamp(t / (burst.impactAt / burst.life), 0, 1);
+      const targetX = burst.targetsBoss && boss && !boss.dying ? boss.x : burst.targetX;
+      const targetY = burst.targetsBoss && boss && !boss.dying ? boss.y : burst.targetY;
+      const waveEndX = lerp(burst.x, targetX, splashT);
+      const waveEndY = lerp(burst.y, targetY, splashT);
+      ctx.save();
+      ctx.globalAlpha = clamp(1 - t * 0.55, 0.35, 1);
+      ctx.shadowColor = "#ffffff";
+      ctx.shadowBlur = 26;
+      if (imgOk(images.firecracker)) {
+        drawImgCentered(images.firecracker, burst.x, burst.y, size, size, 0);
+      } else {
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(burst.x, burst.y, size * 0.35, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.strokeStyle = "rgba(255,255,255,0.92)";
+      ctx.lineWidth = 46;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      for (let i = 0; i <= 18; i++) {
+        const p = i / 18;
+        const x = lerp(burst.x, waveEndX, p);
+        const y = lerp(burst.y, waveEndY, p) + Math.sin(p * Math.PI * 5 + t * 12) * 18 * Math.sin(p * Math.PI);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.fillStyle = "#ffffff";
+      for (let i = 0; i < 8; i++) {
+        const p = clamp(splashT - i * 0.035, 0, 1);
+        const x = lerp(burst.x, targetX, p);
+        const y = lerp(burst.y, targetY, p) + Math.sin(i * 2.2 + t * 10) * 30;
+        const r = 8 + i * 1.7;
+        ctx.beginPath();
+        ctx.ellipse(x, y, r * 1.5, r, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     for (const p of particles) {
@@ -1571,12 +1790,14 @@
     if (boss) {
       document.getElementById("bossFill").style.width = clamp(boss.hp / boss.maxHp, 0, 1) * 100 + "%";
     }
+    const milkFill = document.getElementById("milkMeterFill");
+    if (milkFill) milkFill.style.width = (milkMeter * 100) + "%";
   }
 
   // ---------------------------------------------------------------------
   // Screens / state transitions
   // ---------------------------------------------------------------------
-  const OVERLAYS = ["menuScreen", "pauseScreen", "gameOverScreen", "victoryScreen", "levelIntroScreen", "levelCompleteScreen", "shopScreen", "settingsScreen", "creditsScreen"];
+  const OVERLAYS = ["startGateScreen", "menuScreen", "pauseScreen", "gameOverScreen", "victoryScreen", "levelIntroScreen", "levelCompleteScreen", "shopScreen", "settingsScreen", "creditsScreen", "characterScreen"];
   function showOverlay(id) {
     OVERLAYS.forEach((s) => document.getElementById(s).classList.toggle("hidden", s !== id));
   }
@@ -1629,8 +1850,10 @@
 
   function onGameOver() {
     state = STATE.GAMEOVER;
+    resetHomelanderMusicSchedule();
     document.getElementById("bossBar").classList.remove("show");
     document.getElementById("chargeMeterWrap").classList.remove("show");
+    document.getElementById("milkMeterWrap").classList.remove("show");
     document.getElementById("shieldBadge").classList.remove("show");
     document.getElementById("finalScore").textContent = Math.floor(score);
     document.getElementById("finalTime").textContent = Math.floor(elapsed) + "s";
@@ -1725,8 +1948,10 @@
 
   function goToMenu() {
     state = STATE.MENU;
+    resetHomelanderMusicSchedule();
     document.getElementById("bossBar").classList.remove("show");
     document.getElementById("chargeMeterWrap").classList.remove("show");
+    document.getElementById("milkMeterWrap").classList.remove("show");
     document.getElementById("shieldBadge").classList.remove("show");
     showOverlay("menuScreen");
   }
@@ -1734,6 +1959,30 @@
   // ---------------------------------------------------------------------
   // Wire up UI buttons
   // ---------------------------------------------------------------------
+  document.getElementById("enterGameBtn").addEventListener("click", () => {
+    requestFullscreenLandscape();
+    startBgmOnInteraction();
+    document.getElementById("selectedCharLabel").textContent = CHARACTERS[selectedCharacter].name;
+    showOverlay("menuScreen");
+  });
+  document.getElementById("chooseCharBtn").addEventListener("click", () => {
+    document.querySelectorAll(".charCard").forEach((card) => {
+      card.classList.toggle("selected", card.dataset.char === selectedCharacter);
+    });
+    showOverlay("characterScreen");
+  });
+  document.getElementById("characterBackBtn").addEventListener("click", () => showOverlay("menuScreen"));
+  document.querySelectorAll(".charCard").forEach((card) => {
+    card.addEventListener("click", () => {
+      selectedCharacter = card.dataset.char;
+      saveSelectedCharacter();
+      document.querySelectorAll(".charCard").forEach((c) => c.classList.toggle("selected", c === card));
+      document.getElementById("selectedCharLabel").textContent = CHARACTERS[selectedCharacter].name;
+      const cfg = CHARACTERS[selectedCharacter];
+      if (cfg.themeSound) playHomelanderTheme(4);
+      else playSound("powerup");
+    });
+  });
   document.getElementById("campaignBtn").addEventListener("click", () => { requestFullscreenLandscape(); startNewRun(); });
   document.getElementById("survivalBtn").addEventListener("click", () => { requestFullscreenLandscape(); startSurvival(); });
   document.getElementById("settingsBtn").addEventListener("click", openSettings);
@@ -1813,7 +2062,7 @@
   // ---------------------------------------------------------------------
   resetLevel(0, true);
   loadAssets(() => {
-    playBgm();
+    document.getElementById("selectedCharLabel").textContent = CHARACTERS[selectedCharacter].name;
     requestAnimationFrame(frame);
   });
 })();
