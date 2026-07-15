@@ -63,9 +63,9 @@
     return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
   };
   let musicVolume = readSetting("skyguardian_music_vol", 0.5, 0, 1);
-  let sfxVolume = readSetting("skyguardian_sfx_vol", 1, 0, 1);
+  let sfxVolume = readSetting("skyguardian_sfx_vol", 0.5, 0, 1);
   let controlSensitivity = readSetting("skyguardian_sensitivity", 1, 0.5, 2);
-  let gameZoom = readSetting("skyguardian_game_zoom", 0.94, 0.75, 1.15);
+  let gameZoom = readSetting("skyguardian_game_zoom", 0.95, 0.75, 1.15);
   let assetsLoaded = 0;
   let bgmStarted = false;
   const assetKeys = Object.keys(ASSET_LIST);
