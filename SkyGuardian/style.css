@@ -382,6 +382,15 @@ body.touch-mode .actionButtons {
   gap: 4px;
   margin-top: 6px;
 }
+.shopSectionTitle {
+  margin: 10px 0 2px;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.shopItemRow { border-color: rgba(255, 216, 61, 0.35); }
+.shopOwned { font-size: 11px; font-weight: 600; opacity: 0.8; white-space: nowrap; }
 .pip {
   width: 10px;
   height: 10px;
