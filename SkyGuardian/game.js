@@ -1006,7 +1006,8 @@
   // Update
   // ---------------------------------------------------------------------
   function updateCamera(dt, iv) {
-    let targetZoom = 1.1;
+    // Keep the standard flight view at the same comfortable scale as boss fights.
+    let targetZoom = 0.94;
     if (boostTimer > 0) targetZoom = 1.22;
     if (fireCharging) targetZoom = lerp(targetZoom, 1.02, fireCharge / FIRE_CHARGE_TIME);
     if (levelPhase === "boss") targetZoom = 0.94;
