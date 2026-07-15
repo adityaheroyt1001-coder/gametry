@@ -14,6 +14,14 @@
   </div>
 </div>
 <div id="game-wrap">
+  <div id="startGateScreen" class="overlay">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title">SKY GUARDIAN</h1>
+      <p class="subtitle">Tap below to enter fullscreen and begin</p>
+      <button id="enterGameBtn" class="btn">⛶ Enter Game</button>
+    </div>
+  </div>
   <canvas id="gameCanvas"></canvas>
 
   <!-- HUD -->
@@ -40,6 +48,7 @@
   <div id="fireBadge">🔥 FIRE READY! (F)</div>
   <div id="shieldBadge">🛡 SHIELD READY (E)</div>
   <div id="chargeMeterWrap"><div id="chargeMeterFill"></div></div>
+  <div id="milkMeterWrap"><div id="milkMeterFill"></div></div>
 
   <div id="topRightControls">
     <button id="pauseBtn" class="iconBtn" title="Pause (P)">❚❚</button>
@@ -54,13 +63,14 @@
   <div id="touchStick"><div class="knob"></div></div>
 
   <!-- Main Menu -->
-  <div id="menuScreen" class="overlay">
+  <div id="menuScreen" class="overlay hidden">
     <div class="veil"></div>
     <div class="content">
       <h1 class="game-title">SKY GUARDIAN</h1>
       <p class="subtitle">Fly forever. Collect. Survive.</p>
       <button id="campaignBtn" class="btn">▶ Campaign · 20 Levels</button>
       <button id="survivalBtn" class="btn secondary">♾ Survival Mode</button>
+      <button id="chooseCharBtn" class="btn small">🦸 Playing as: <span id="selectedCharLabel">Superman</span></button>
       <div class="menuRow">
         <button id="settingsBtn" class="btn small">⚙ Settings</button>
         <button id="creditsBtn" class="btn small">ℹ Credits</button>
@@ -82,6 +92,19 @@
   </div>
 
   <!-- Pause -->
+  <div id="characterScreen" class="overlay hidden">
+    <div class="veil"></div>
+    <div class="content">
+      <h1 class="game-title" style="font-size:clamp(28px,6vw,46px)">CHOOSE YOUR GUARDIAN</h1>
+      <div class="charGrid">
+        <button class="charCard" data-char="superman"><div class="charIcon">🦸</div><div class="charName">Superman</div><div class="charDesc">Balanced · Red heat-vision laser</div></button>
+        <button class="charCard" data-char="batman"><div class="charIcon">🦇</div><div class="charName">Batman</div><div class="charDesc">Throws spinning batarangs</div></button>
+        <button class="charCard" data-char="homelander"><div class="charIcon">🦸‍♂️</div><div class="charName">Homelander</div><div class="charDesc">Bloodied laser · Milk-fueled Sonic Boom</div></button>
+      </div>
+      <button id="characterBackBtn" class="btn secondary">◀ Back</button>
+    </div>
+  </div>
+
   <div id="pauseScreen" class="overlay hidden">
     <div class="veil"></div>
     <div class="content">
