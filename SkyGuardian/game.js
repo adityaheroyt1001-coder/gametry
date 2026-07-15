@@ -58,8 +58,14 @@
 
   const images = {};
   const sounds = {};
-  let musicVolume = Number(localStorage.getItem("skyguardian_music_vol") ?? 0.5);
-  let sfxVolume = Number(localStorage.getItem("skyguardian_sfx_vol") ?? 1);
+  const readSetting = (key, fallback, min, max) => {
+    const value = Number(localStorage.getItem(key));
+    return Number.isFinite(value) ? Math.max(min, Math.min(max, value)) : fallback;
+  };
+  let musicVolume = readSetting("skyguardian_music_vol", 0.5, 0, 1);
+  let sfxVolume = readSetting("skyguardian_sfx_vol", 1, 0, 1);
+  let controlSensitivity = readSetting("skyguardian_sensitivity", 1, 0.5, 2);
+  let gameZoom = readSetting("skyguardian_game_zoom", 0.94, 0.75, 1.15);
   let assetsLoaded = 0;
   let bgmStarted = false;
   const assetKeys = Object.keys(ASSET_LIST);
@@ -133,6 +139,7 @@
     if (sounds[key]) {
       try {
         sounds[key].currentTime = 0;
+        sounds[key].volume = sfxVolume;
         sounds[key].play().catch(() => {});
       } catch (e) {}
     }
@@ -1006,11 +1013,10 @@
   // Update
   // ---------------------------------------------------------------------
   function updateCamera(dt, iv) {
-    // Keep the standard flight view at the same comfortable scale as boss fights.
-    let targetZoom = 0.94;
-    if (boostTimer > 0) targetZoom = 1.22;
-    if (fireCharging) targetZoom = lerp(targetZoom, 1.02, fireCharge / FIRE_CHARGE_TIME);
-    if (levelPhase === "boss") targetZoom = 0.94;
+    // The player-controlled zoom is the default view for both normal and boss play.
+    let targetZoom = gameZoom;
+    if (boostTimer > 0) targetZoom = Math.min(1.3, gameZoom + 0.28);
+    if (fireCharging) targetZoom = lerp(targetZoom, Math.min(1.3, gameZoom + 0.08), fireCharge / FIRE_CHARGE_TIME);
     cam.zoom = lerp(cam.zoom, targetZoom, Math.min(1, dt * 2.2));
     cam.rot = lerp(cam.rot, hero.tilt * 0.35, Math.min(1, dt * 5));
     cam.leadX = lerp(cam.leadX, 90 + iv.x * 30, Math.min(1, dt * 2.5));
@@ -1045,8 +1051,8 @@
     const effectiveSpeed = scrollSpeed * (boostTimer > 0 ? BOOST_MULT : 1);
 
     const HERO_SPEED = currentHeroSpeed();
-    hero.targetX = clamp(hero.targetX + iv.x * HERO_SPEED * dt, 70, W * 0.72);
-    hero.targetY = clamp(hero.targetY + iv.y * HERO_SPEED * dt, 50, H - 50);
+    hero.targetX = clamp(hero.targetX + iv.x * HERO_SPEED * controlSensitivity * dt, 70, W * 0.72);
+    hero.targetY = clamp(hero.targetY + iv.y * HERO_SPEED * controlSensitivity * dt, 50, H - 50);
     hero.x = lerp(hero.x, hero.targetX, Math.min(1, dt * 8));
     hero.y = lerp(hero.y, hero.targetY, Math.min(1, dt * 8));
     hero.tilt = clamp((hero.targetY - hero.y) * 0.02 + iv.x * 0.15, -0.5, 0.5);
@@ -1809,6 +1815,10 @@
   function openSettings() {
     document.getElementById("musicVolRange").value = musicVolume;
     document.getElementById("sfxVolRange").value = sfxVolume;
+    document.getElementById("sensitivityRange").value = controlSensitivity;
+    document.getElementById("sensitivityValue").textContent = `${Math.round(controlSensitivity * 100)}%`;
+    document.getElementById("gameZoomRange").value = gameZoom;
+    document.getElementById("gameZoomValue").textContent = `${Math.round(gameZoom * 100)}%`;
     showOverlay("settingsScreen");
   }
 
@@ -2000,13 +2010,16 @@
     sfxVolume = Number(e.target.value);
     localStorage.setItem("skyguardian_sfx_vol", String(sfxVolume));
   });
-  document.getElementById("campaignBtn").addEventListener("click", () => { requestFullscreenLandscape(); startNewRun(); });
-  document.getElementById("survivalBtn").addEventListener("click", () => { requestFullscreenLandscape(); startSurvival(); });
-  document.getElementById("settingsBtn").addEventListener("click", openSettings);
-  document.getElementById("creditsBtn").addEventListener("click", () => showOverlay("creditsScreen"));
-  document.getElementById("settingsBackBtn").addEventListener("click", goToMenu);
-  document.getElementById("creditsBackBtn").addEventListener("click", goToMenu);
-  document.getElementById("fullscreenBtn").addEventListener("click", requestFullscreenLandscape);
+  document.getElementById("sensitivityRange").addEventListener("input", (e) => {
+    controlSensitivity = Number(e.target.value);
+    localStorage.setItem("skyguardian_sensitivity", String(controlSensitivity));
+    document.getElementById("sensitivityValue").textContent = `${Math.round(controlSensitivity * 100)}%`;
+  });
+  document.getElementById("gameZoomRange").addEventListener("input", (e) => {
+    gameZoom = Number(e.target.value);
+    localStorage.setItem("skyguardian_game_zoom", String(gameZoom));
+    document.getElementById("gameZoomValue").textContent = `${Math.round(gameZoom * 100)}%`;
+  });
   document.getElementById("levelIntroBtn").addEventListener("click", beginLevel);
   document.getElementById("retryBtn").addEventListener("click", retryLevel);
   document.getElementById("menuFromGameOverBtn").addEventListener("click", goToMenu);
