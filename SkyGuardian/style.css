@@ -460,6 +460,7 @@ body.touch-mode .actionButtons {
   font-size: 14px;
 }
 .settingsRow input[type="range"] { width: 160px; }
+.settingsRow output { color: var(--gold); font-weight: 700; margin-left: 4px; }
 
 /* ---------- Rotate-device fallback ---------- */
 #rotateOverlay {
